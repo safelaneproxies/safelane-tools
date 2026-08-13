@@ -30,7 +30,7 @@
 
     const row = el("div", { className: "cta-row" });
     if (cfg.whop) {
-      row.appendChild(el("a", { className: "btn", href: cfg.whop, target: "_blank", rel: "noopener" }, ["Whop product"]));
+      row.appendChild(el("a", { className: "btn", href: cfg.whop, target: "_blank", rel: "noopener" }, ["UK 4G proxies"]));
     }
     if (discordOk) {
       row.appendChild(el("a", { className: "btn secondary", href: cfg.discord, target: "_blank", rel: "noopener" }, ["Discord"]));
