@@ -1,8 +1,8 @@
-# Safe Lane — exit IP check
+# Safe Lane exit IP check
 
 Paste an exit IP. See whether it looks like mobile/carrier or datacentre/hosting.
 
-**Open the tool:** [safelaneproxies.github.io/safelane-tools](https://safelaneproxies.github.io/safelane-tools/)
+* -> [safelaneproxies.github.io/safelane-tools](https://safelaneproxies.github.io/safelane-tools/)
 
 ## About Safe Lane
 
