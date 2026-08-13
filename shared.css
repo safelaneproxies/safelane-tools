@@ -176,10 +176,11 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 .result.mobile { background: var(--ok-bg); border-color: color-mix(in srgb, var(--mobile) 35%, var(--line)); }
 .result.datacentre { background: var(--dc-bg); border-color: color-mix(in srgb, var(--dc) 35%, var(--line)); }
 .result.unclear { background: var(--unclear-bg); border-color: color-mix(in srgb, var(--unclear) 35%, var(--line)); }
-.result h2 {
-  margin: 0 0 0.4rem;
-  font-size: 1.2rem;
-  letter-spacing: -0.02em;
+.result p {
+  margin: 0 0 0.75rem;
+}
+.result-copy {
+  line-height: 1.45;
 }
 .result .tag {
   display: inline-block;

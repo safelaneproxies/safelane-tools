@@ -49,20 +49,30 @@
 
     let kind = "unclear";
     let title = "Unclear. Dig a little more";
-    let detail =
-      "ASN/org does not clearly read as mobile carrier or obvious hosting. Check if this is the real exit (through the proxy), and whether the org is a UK mobile MVNO reseller.";
+    let detail = [
+      "ASN/org is not a clear mobile carrier or obvious hosting.",
+      "Confirm this is the real exit through the proxy.",
+    ];
 
     if (hostingFlag || HOSTING_RE.test(blob)) {
       kind = "datacentre";
       title = "Looks like datacentre / hosting";
-      detail =
-        "Org/ISP matches cloud or hosting, or the API marks this as hosting. Target sites often treat this differently from real UK mobile exits.";
+      detail = [
+        "Org/ISP matches cloud or hosting, or the API marks hosting.",
+        "Sites often treat this differently from real UK mobile exits.",
+      ];
     } else if (known || MOBILE_RE.test(blob)) {
       kind = "mobile";
       title = "Looks like mobile / carrier";
       detail = known
-        ? `Matches a known UK-ish carrier ASN hint (${known.name}). Dedicated UK 4G lines should look like this class of exit, not OVH/AWS.`
-        : "Org/ISP name looks carrier/mobile. Dedicated UK 4G (O2/giffgaff-class) should read like this, not a cloud ASN.";
+        ? [
+            "Matches a known UK-ish carrier ASN hint (" + known.name + ").",
+            "Dedicated UK 4G lines should look like this, not OVH/AWS.",
+          ]
+        : [
+            "Org/ISP name looks carrier/mobile.",
+            "Dedicated UK 4G (O2/giffgaff-class) should read like this, not a cloud ASN.",
+          ];
     }
 
     return { kind, title, detail, asn, org, isp, country: data.country, country_code: data.country_code };
@@ -79,7 +89,8 @@
     const h = document.createElement("h2");
     h.textContent = c.title;
     const p = document.createElement("p");
-    p.textContent = c.detail;
+    p.className = "result-copy";
+    p.innerHTML = c.detail.map((line) => escapeHtml(line)).join("<br />");
     const meta = document.createElement("div");
     meta.className = "meta";
     meta.innerHTML = [
@@ -91,8 +102,8 @@
     ].join("");
     const note = document.createElement("p");
     note.className = "hint";
-    note.textContent =
-      "Dedicated UK 4G exits look like O2/giffgaff mobile, not a cloud ASN. Entry IPs on a VPS are not what sites see.";
+    note.innerHTML =
+      "Dedicated UK 4G exits look like O2/giffgaff mobile, not a cloud ASN.<br />Entry IPs on a VPS are not what sites see.";
     out.append(tag, h, p, meta, note);
     out.classList.remove("hidden");
   }
