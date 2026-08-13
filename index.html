@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>UK exit classifier: mobile vs datacentre</title>
-  <meta name="description" content="Paste an exit IP. See ASN/org and whether it looks like UK mobile/carrier or datacentre/hosting. Free, browser-only, no signup." />
+  <title>Exit IP check — mobile vs datacentre</title>
+  <meta name="description" content="Paste an exit IP. See ASN/org/country and whether it looks mobile/carrier or datacentre/hosting. Free, browser-only, no signup." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -13,24 +13,25 @@
 <body>
   <div class="wrap">
     <header class="top">
-      <a class="brand" href="./">Safe <span>Lane</span> tools</a>
+      <a class="brand" href="./">Safe <span>Lane</span></a>
     </header>
 
-    <h1>UK exit classifier</h1>
+    <h1>Exit IP check</h1>
     <p class="lede">
-      Paste the IP your scraper actually exits on. We show ASN / org / country and a plain label:
-      mobile/carrier vs datacentre/hosting vs unclear. Runs in your browser. No signup.
+      Paste the IP that sites actually see (the one through your proxy, not the VPS entry).
+      We show ASN / org / country and a plain label: mobile/carrier, datacentre/hosting, or unclear.
+      Runs in your browser. No signup.
     </p>
 
     <div class="panel">
       <label for="ip">Exit IP</label>
       <div class="row">
         <input id="ip" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="e.g. 82.132.x.x or any exit IP" />
-        <button type="button" id="check">Classify</button>
+        <button type="button" id="check">Check</button>
         <button type="button" class="secondary" id="mine">Use my IP</button>
       </div>
       <p class="hint">
-        Tip: check the exit through your proxy (<code>curl -x http://USER:PASS@HOST:PORT https://api.ipify.org</code>), not the VPS entry IP.
+        Tip: get the exit with <code>curl -x http://USER:PASS@HOST:PORT https://api.ipify.org</code>.
         Dedicated UK 4G exits usually look like O2 / giffgaff mobile, not a cloud ASN.
       </p>
       <p class="err hidden" id="err"></p>

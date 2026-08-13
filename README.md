@@ -1,8 +1,8 @@
-# Safe Lane tools
+# Safe Lane — exit IP check
 
-Free browser-only utility: classify an exit IP as mobile/carrier vs datacentre/hosting.
+Paste an exit IP. See whether it looks like mobile/carrier or datacentre/hosting.
 
-**Live:** [safelaneproxies.github.io/safelane-tools](https://safelaneproxies.github.io/safelane-tools/)
+**Open the tool:** [safelaneproxies.github.io/safelane-tools](https://safelaneproxies.github.io/safelane-tools/)
 
 ## About Safe Lane
 
