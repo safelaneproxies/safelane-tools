@@ -1,20 +1,31 @@
 (function () {
-  // Client-side hints only. Not a legal ASN registry. Prefer org/isp string matches + hosting flag.
+  // Client-side hints only. Not a legal ASN registry.
+  // Mobile = cellular. Fixed = cable/DSL/fibre ISP (not 4G).
+
   const UK_MOBILE = [
     { asn: 12576, name: "O2 / Telefonica UK" },
     { asn: 60339, name: "Hutchison 3G UK (Three)" },
     { asn: 132869, name: "Three UK related" },
     { asn: 25135, name: "Vodafone UK" },
     { asn: 5378, name: "Vodafone UK / Cable & Wireless" },
-    { asn: 5607, name: "Sky UK / broadband (sometimes shared paths)" },
-    { asn: 6871, name: "Plusnet / BT retail" },
+  ];
+
+  const UK_FIXED = [
+    { asn: 5089, name: "Virgin Media (cable broadband)" },
     { asn: 2856, name: "BT" },
-    { asn: 5089, name: "Virgin Media" },
-    { asn: 13037, name: "Zen / UK ISP" },
+    { asn: 5607, name: "Sky UK" },
+    { asn: 6871, name: "Plusnet" },
+    { asn: 13037, name: "Zen Internet" },
+    { asn: 8586, name: "TalkTalk" },
+    { asn: 9105, name: "Tiscali / TalkTalk related" },
+    { asn: 206509, name: "Virgin Media Business (often fixed)" },
   ];
 
   const MOBILE_RE =
-    /\b(o2|telefonica|giffgaff|ee limited|\bee\b|everything everywhere|vodafone|hutchison|three\.co|3uk|tesco mobile|lebara|lycamobile|smc|mobile|cellular|wireless)\b/i;
+    /\b(o2\b|telefonica|giffgaff|everything everywhere|\bee limited\b|vodafone|hutchison|three\.co|3uk|tesco mobile|lebara|lycamobile|mobile network|cellular)\b/i;
+
+  const FIXED_RE =
+    /\b(virgin media|virginmedia|bt\.com|british telecom|\bsky broadband\b|plusnet|talktalk|zen internet|cable communications)\b/i;
 
   const HOSTING_RE =
     /\b(amazon|aws|ec2|google|gcp|microsoft|azure|digitalocean|linode|akamai|cloudflare|ovh|hetzner|vultr|contabo|leaseweb|choopa|softlayer|ibm cloud|oracle cloud|scaleway|m247|psychz|quadranet|colocrossing|hostinger|hosting|datacenter|data center|server|vps|cdn)\b/i;
@@ -45,15 +56,18 @@
     const isp = ((data.connection && data.connection.isp) || "").trim();
     const blob = `${org} ${isp}`;
     const hostingFlag = !!(data.security && data.security.hosting);
-    const known = UK_MOBILE.find((x) => x.asn === asn);
+    const knownMobile = UK_MOBILE.find((x) => x.asn === asn);
+    const knownFixed = UK_FIXED.find((x) => x.asn === asn);
 
     let kind = "unclear";
     let title = "Unclear. Dig a little more";
     let detail = [
-      "ASN/org is not a clear mobile carrier or obvious hosting.",
+      "ASN/org is not a clear mobile carrier, fixed ISP, or obvious hosting.",
       "Confirm this is the real exit through the proxy.",
     ];
 
+    // Hosting first, then fixed ISP, then mobile.
+    // Virgin Media etc must never be labelled mobile.
     if (hostingFlag || HOSTING_RE.test(blob)) {
       kind = "datacentre";
       title = "Looks like datacentre / hosting";
@@ -61,16 +75,28 @@
         "Org/ISP matches cloud or hosting, or the API marks hosting.",
         "Sites often treat this differently from real UK mobile exits.",
       ];
-    } else if (known || MOBILE_RE.test(blob)) {
-      kind = "mobile";
-      title = "Looks like mobile / carrier";
-      detail = known
+    } else if (knownFixed || FIXED_RE.test(blob)) {
+      kind = "broadband";
+      title = "Looks like fixed ISP / broadband";
+      detail = knownFixed
         ? [
-            "Matches a known UK-ish carrier ASN hint (" + known.name + ").",
-            "Dedicated UK 4G lines should look like this, not OVH/AWS.",
+            "Matches a known UK fixed ISP ASN (" + knownFixed.name + ").",
+            "Cable/DSL/fibre home or business line, not cellular 4G.",
           ]
         : [
-            "Org/ISP name looks carrier/mobile.",
+            "Org/ISP name looks like fixed broadband, not a mobile carrier.",
+            "Dedicated UK 4G exits should look like O2/giffgaff/Three, not Virgin cable.",
+          ];
+    } else if (knownMobile || MOBILE_RE.test(blob)) {
+      kind = "mobile";
+      title = "Looks like mobile / carrier";
+      detail = knownMobile
+        ? [
+            "Matches a known UK mobile carrier ASN hint (" + knownMobile.name + ").",
+            "Dedicated UK 4G lines should look like this class of exit, not OVH/AWS.",
+          ]
+        : [
+            "Org/ISP name looks cellular / mobile carrier.",
             "Dedicated UK 4G (O2/giffgaff-class) should read like this, not a cloud ASN.",
           ];
     }
@@ -85,7 +111,13 @@
     const tag = document.createElement("div");
     tag.className = "tag";
     tag.textContent =
-      c.kind === "mobile" ? "Mobile / carrier" : c.kind === "datacentre" ? "Datacentre / hosting" : "Unclear";
+      c.kind === "mobile"
+        ? "Mobile / carrier"
+        : c.kind === "datacentre"
+          ? "Datacentre / hosting"
+          : c.kind === "broadband"
+            ? "Fixed ISP / broadband"
+            : "Unclear";
     const h = document.createElement("h2");
     h.textContent = c.title;
     const p = document.createElement("p");
@@ -103,7 +135,7 @@
     const note = document.createElement("p");
     note.className = "hint";
     note.innerHTML =
-      "Dedicated UK 4G exits look like O2/giffgaff mobile, not a cloud ASN.<br />Entry IPs on a VPS are not what sites see.";
+      "Dedicated UK 4G exits look like O2/giffgaff/Three mobile, not Virgin cable or a cloud ASN.<br />Entry IPs on a VPS are not what sites see.";
     out.append(tag, h, p, meta, note);
     out.classList.remove("hidden");
   }

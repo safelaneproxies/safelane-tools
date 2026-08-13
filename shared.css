@@ -9,8 +9,8 @@
   --accent-ink: #fff;
   --mobile: #0f6b5c;
   --dc: #9a3412;
-  --unclear: #7a5c00;
-  --ok-bg: #e4f3ef;
+  --broadband: #1d4f8c;
+  --broadband-bg: #e4eef8;
   --dc-bg: #fde8e0;
   --unclear-bg: #f7efd4;
   --mono: "IBM Plex Mono", ui-monospace, monospace;
@@ -175,6 +175,7 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 }
 .result.mobile { background: var(--ok-bg); border-color: color-mix(in srgb, var(--mobile) 35%, var(--line)); }
 .result.datacentre { background: var(--dc-bg); border-color: color-mix(in srgb, var(--dc) 35%, var(--line)); }
+.result.broadband { background: var(--broadband-bg); border-color: color-mix(in srgb, var(--broadband) 35%, var(--line)); }
 .result.unclear { background: var(--unclear-bg); border-color: color-mix(in srgb, var(--unclear) 35%, var(--line)); }
 .result p {
   margin: 0 0 0.75rem;
@@ -193,6 +194,7 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 }
 .result.mobile .tag { color: var(--mobile); }
 .result.datacentre .tag { color: var(--dc); }
+.result.broadband .tag { color: var(--broadband); }
 .result.unclear .tag { color: var(--unclear); }
 .meta {
   font-family: var(--mono);
