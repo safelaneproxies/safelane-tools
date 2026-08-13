@@ -1,0 +1,157 @@
+(function () {
+  // Client-side hints only. Not a legal ASN registry. Prefer org/isp string matches + hosting flag.
+  const UK_MOBILE = [
+    { asn: 12576, name: "O2 / Telefonica UK" },
+    { asn: 60339, name: "Hutchison 3G UK (Three)" },
+    { asn: 132869, name: "Three UK related" },
+    { asn: 25135, name: "Vodafone UK" },
+    { asn: 5378, name: "Vodafone UK / Cable & Wireless" },
+    { asn: 5607, name: "Sky UK / broadband (sometimes shared paths)" },
+    { asn: 6871, name: "Plusnet / BT retail" },
+    { asn: 2856, name: "BT" },
+    { asn: 5089, name: "Virgin Media" },
+    { asn: 13037, name: "Zen / UK ISP" },
+  ];
+
+  const MOBILE_RE =
+    /\b(o2|telefonica|giffgaff|ee limited|\bee\b|everything everywhere|vodafone|hutchison|three\.co|3uk|tesco mobile|lebara|lycamobile|smc|mobile|cellular|wireless)\b/i;
+
+  const HOSTING_RE =
+    /\b(amazon|aws|ec2|google|gcp|microsoft|azure|digitalocean|linode|akamai|cloudflare|ovh|hetzner|vultr|contabo|leaseweb|choopa|softlayer|ibm cloud|oracle cloud|scaleway|m247|psychz|quadranet|colocrossing|hostinger|hosting|datacenter|data center|server|vps|cdn)\b/i;
+
+  const ipEl = document.getElementById("ip");
+  const out = document.getElementById("out");
+  const err = document.getElementById("err");
+  const checkBtn = document.getElementById("check");
+  const mineBtn = document.getElementById("mine");
+
+  function showErr(msg) {
+    err.textContent = msg || "";
+    err.classList.toggle("hidden", !msg);
+  }
+
+  function validIp(s) {
+    const v4 = /^(?:\d{1,3}\.){3}\d{1,3}$/;
+    const v6 = /^[0-9a-f:]+$/i;
+    if (v4.test(s)) {
+      return s.split(".").every((p) => Number(p) >= 0 && Number(p) <= 255);
+    }
+    return v6.test(s) && s.includes(":");
+  }
+
+  function classify(data) {
+    const asn = data.connection && data.connection.asn != null ? Number(data.connection.asn) : null;
+    const org = ((data.connection && data.connection.org) || "").trim();
+    const isp = ((data.connection && data.connection.isp) || "").trim();
+    const blob = `${org} ${isp}`;
+    const hostingFlag = !!(data.security && data.security.hosting);
+    const known = UK_MOBILE.find((x) => x.asn === asn);
+
+    let kind = "unclear";
+    let title = "Unclear. Dig a little more";
+    let detail =
+      "ASN/org does not clearly read as mobile carrier or obvious hosting. Check if this is the real exit (through the proxy), and whether the org is a UK mobile MVNO reseller.";
+
+    if (hostingFlag || HOSTING_RE.test(blob)) {
+      kind = "datacentre";
+      title = "Looks like datacentre / hosting";
+      detail =
+        "Org/ISP matches cloud or hosting, or the API marks this as hosting. Target sites often treat this differently from real UK mobile exits.";
+    } else if (known || MOBILE_RE.test(blob)) {
+      kind = "mobile";
+      title = "Looks like mobile / carrier";
+      detail = known
+        ? `Matches a known UK-ish carrier ASN hint (${known.name}). Dedicated UK 4G lines should look like this class of exit, not OVH/AWS.`
+        : "Org/ISP name looks carrier/mobile. Dedicated UK 4G (O2/giffgaff-class) should read like this, not a cloud ASN.";
+    }
+
+    return { kind, title, detail, asn, org, isp, country: data.country, country_code: data.country_code };
+  }
+
+  function render(ip, data) {
+    const c = classify(data);
+    out.className = `result ${c.kind}`;
+    out.innerHTML = "";
+    const tag = document.createElement("div");
+    tag.className = "tag";
+    tag.textContent =
+      c.kind === "mobile" ? "Mobile / carrier" : c.kind === "datacentre" ? "Datacentre / hosting" : "Unclear";
+    const h = document.createElement("h2");
+    h.textContent = c.title;
+    const p = document.createElement("p");
+    p.textContent = c.detail;
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    meta.innerHTML = [
+      `<div>IP: ${escapeHtml(ip)}</div>`,
+      `<div>Country: ${escapeHtml(c.country || "?")}${c.country_code ? " (" + escapeHtml(c.country_code) + ")" : ""}</div>`,
+      `<div>ASN: ${c.asn != null ? "AS" + c.asn : "?"}</div>`,
+      `<div>Org: ${escapeHtml(c.org || "?")}</div>`,
+      `<div>ISP: ${escapeHtml(c.isp || "?")}</div>`,
+    ].join("");
+    const note = document.createElement("p");
+    note.className = "hint";
+    note.textContent =
+      "Dedicated UK 4G exits look like O2/giffgaff mobile, not a cloud ASN. Entry IPs on a VPS are not what sites see.";
+    out.append(tag, h, p, meta, note);
+    out.classList.remove("hidden");
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  async function lookup(ip) {
+    showErr("");
+    out.classList.add("hidden");
+    checkBtn.disabled = true;
+    mineBtn.disabled = true;
+    try {
+      const res = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}`);
+      if (!res.ok) throw new Error("Lookup failed (" + res.status + ")");
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || "Lookup failed for that IP");
+      render(data.ip || ip, data);
+    } catch (e) {
+      showErr(e.message || "Lookup failed");
+    } finally {
+      checkBtn.disabled = false;
+      mineBtn.disabled = false;
+    }
+  }
+
+  checkBtn.addEventListener("click", () => {
+    const ip = ipEl.value.trim();
+    if (!ip || !validIp(ip)) {
+      showErr("Enter a valid IPv4 or IPv6 address.");
+      return;
+    }
+    lookup(ip);
+  });
+
+  ipEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") checkBtn.click();
+  });
+
+  mineBtn.addEventListener("click", async () => {
+    showErr("");
+    out.classList.add("hidden");
+    checkBtn.disabled = true;
+    mineBtn.disabled = true;
+    try {
+      const res = await fetch("https://api.ipify.org?format=json");
+      if (!res.ok) throw new Error("Could not fetch your public IP");
+      const { ip } = await res.json();
+      ipEl.value = ip;
+      await lookup(ip);
+    } catch (e) {
+      showErr(e.message || "Could not detect your IP");
+      checkBtn.disabled = false;
+      mineBtn.disabled = false;
+    }
+  });
+})();
